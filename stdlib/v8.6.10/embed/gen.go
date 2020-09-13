@@ -1,0 +1,3 @@
+package embed
+
+//go:generate go-bindata -fs -nomemcopy -pkg embed -prefix .. -o bindata.go ../govfs/...
