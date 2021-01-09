@@ -1,8 +1,8 @@
 package atkvfs
 
-import "net/http"
+import "io/fs"
 
-func Mount(prefix string, fs http.FileSystem) {
+func Mount(prefix string, fs fs.FS) {
 	globalMountedFSManager.Mount(prefix, fs)
 }
 

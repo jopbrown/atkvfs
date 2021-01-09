@@ -15,6 +15,7 @@ static void stat_set_time(Tcl_StatBuf *stat, time_t t) {
 */
 import "C"
 import (
+	"io"
 	"unsafe"
 )
 
@@ -150,7 +151,7 @@ func _go_DriverSeekProc(clientData unsafe.Pointer, offset C.long, seekMode C.int
 		return -1
 	}
 
-	n, err := f.Seek(int64(offset), int(seekMode))
+	n, err := f.(io.Seeker).Seek(int64(offset), int(seekMode))
 	if err != nil {
 		*errorCodePtr = C.EIO
 	}

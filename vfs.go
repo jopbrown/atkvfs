@@ -2,7 +2,7 @@ package atkvfs
 
 import (
 	"fmt"
-	"net/http"
+	"io/fs"
 	"path"
 	"strings"
 )
@@ -13,14 +13,14 @@ var (
 )
 
 type mountedFSManager struct {
-	fsMap map[string]http.FileSystem
+	fsMap map[string]fs.FS
 }
 
 func newMountedFSManager() *mountedFSManager {
-	return &mountedFSManager{make(map[string]http.FileSystem)}
+	return &mountedFSManager{make(map[string]fs.FS)}
 }
 
-func (m *mountedFSManager) GetFS(fname string) http.FileSystem {
+func (m *mountedFSManager) GetFS(fname string) fs.FS {
 	for prefix, fs := range m.fsMap {
 		if strings.HasPrefix(path.Clean(fname), prefix) {
 			return fs
@@ -30,7 +30,7 @@ func (m *mountedFSManager) GetFS(fname string) http.FileSystem {
 	return nil
 }
 
-func (m *mountedFSManager) Open(fname string) (http.File, error) {
+func (m *mountedFSManager) Open(fname string) (fs.File, error) {
 	fs := m.GetFS(fname)
 	if nil == fs {
 		return nil, fmt.Errorf("file not register in vfs: %s", fname)
@@ -39,7 +39,7 @@ func (m *mountedFSManager) Open(fname string) (http.File, error) {
 	return fs.Open(fname)
 }
 
-func (m *mountedFSManager) Mount(prefix string, fs http.FileSystem) {
+func (m *mountedFSManager) Mount(prefix string, fs fs.FS) {
 	m.fsMap[prefix] = fs
 }
 
@@ -48,15 +48,15 @@ func (m *mountedFSManager) Unmount(prefix string) {
 }
 
 type openedFileManager struct {
-	fileMap map[uintptr]http.File
+	fileMap map[uintptr]fs.File
 	id      uintptr
 }
 
 func newOpenedFileManager() *openedFileManager {
-	return &openedFileManager{make(map[uintptr]http.File), 1}
+	return &openedFileManager{make(map[uintptr]fs.File), 1}
 }
 
-func (m *openedFileManager) Register(f http.File) uintptr {
+func (m *openedFileManager) Register(f fs.File) uintptr {
 	m.id = m.id + 1
 	m.fileMap[m.id] = f
 	return m.id
@@ -66,7 +66,7 @@ func (m *openedFileManager) UnRegister(id uintptr) {
 	delete(m.fileMap, id)
 }
 
-func (m *openedFileManager) GetFile(id uintptr) http.File {
+func (m *openedFileManager) GetFile(id uintptr) fs.File {
 	return m.fileMap[id]
 }
 
@@ -87,7 +87,12 @@ func vfsScanFiles(p string) (paths []string, err error) {
 		return paths, nil
 	}
 
-	subs, err := f.Readdir(-1)
+	dir, ok := f.(fs.ReadDirFile)
+	if !ok {
+		return paths, nil
+	}
+
+	subs, err := dir.ReadDir(-1)
 	if err != nil {
 		return nil, err
 	}

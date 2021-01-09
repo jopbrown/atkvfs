@@ -1,10 +1,10 @@
 
 
-This is a addon package for [atk](https://github.com/visualfc/atk) that wrapping [TCL FileSystem API](https://www.tcl-lang.org/man/tcl8.6/TclLib/FileSystem.htm) to mount `http.FileSystem` as virtual filesystem.
+This is a addon package for [atk](https://github.com/visualfc/atk) that wrapping [TCL FileSystem API](https://www.tcl-lang.org/man/tcl8.6/TclLib/FileSystem.htm) to mount `fs.FS` as virtual filesystem.
 
 ## Features:
 * Embed TCL/TK stdlib to build a standalone GUI app without installing `libtcl/libtk`.
-* Mount/Unmount `http.FileSystem` as virtual filesystem.
+* Mount/Unmount `fs.FS` as virtual filesystem.
 
 ## Status
 * `Linux` is available via `cgo`.
@@ -74,6 +74,8 @@ func main() {
 
 ### Mount/Unmount virtual filesystem.
 ```go
-var fs http.FileSystem = assert("/myvfs")
-atkvfs.Mount("/myvfs", fs)
+//go:embde myvfs
+var myvfs embed.FS
+
+atkvfs.Mount("/myvfs", myvfs)
 ```
